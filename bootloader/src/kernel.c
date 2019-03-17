@@ -276,3 +276,7 @@ void kernel_main(void)
 	rpi_reboot();
 
 }
+
+void kernel_child() {
+	hang();
+}

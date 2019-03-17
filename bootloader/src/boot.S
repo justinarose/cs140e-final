@@ -9,8 +9,8 @@ _start:
 	mrs	x0, mpidr_el1		
 	and	x0, x0,#0xFF		// Check processor id
 	cbz	x0, master		// Hang for all non-primary CPU
-	b	proc_hang
-//	b child
+//	b	proc_hang
+	b child
 
 proc_hang: 
 	b 	proc_hang
@@ -39,10 +39,10 @@ el1_entry:
 	sub	x1, x1, x0
 	bl 	memzero
 
-	mov	sp, #LOW_MEMORY 
+	mov	sp, #STACK_CORE0
 	bl	kernel_main
 	b 	proc_hang		// should never come here
-/*
+
 child:
 	ldr	x0, =SCTLR_VALUE_MMU_DISABLED
 	msr	sctlr_el1, x0		
@@ -64,10 +64,9 @@ child:
 el1_entry_child:
 	mrs	x0, mpidr_el1		
 	and	x0, x0,#0xFF
-	mov x1, #SECTION_SIZE
+	mov x1, #STACK_SIZE
 	mul x0, x0, x1
-	add x0, x0, #LOW_MEMORY
+	add x0, x0, #STACK_CORE0
 	mov	sp, x0
 	bl	kernel_child
 	b 	proc_hang		// should never come here
-*/
