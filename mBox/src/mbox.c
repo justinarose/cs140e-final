@@ -18,6 +18,8 @@ unsigned mbox_init(unsigned mbox){
 
 unsigned mbox_send(unsigned cpu, unsigned mbox, unsigned msg){
 
+	
+
 	unsigned core_x_mbox_x_set_addr = CORE0_MBOX0_SET + 4*4*cpu + 4*mbox;
 	put32(core_x_mbox_x_set_addr, msg);
 

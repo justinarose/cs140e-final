@@ -42,7 +42,7 @@ void kernel_main(void)
 	for(unsigned i=0; i < 40; i++){
 		delay(200000);
 		msg = i;
-		mbox_sendA((i%4), (i%4), &i);
+		mbox_sendA((i%4), (i%4), &msg);
 	}
 
 	while(1) {;}
@@ -64,7 +64,7 @@ void kernel_child(void)
 	unsigned msg;
 	for(unsigned i=0; i < 4; i++) {
 		delay(200000);
-		msg = 5*cpu*i;
+		msg = (10*cpu)+i;
 		mbox_sendA(0, i, &msg);
 	}
 	

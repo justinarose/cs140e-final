@@ -9,4 +9,12 @@ extern unsigned int* getA32 ( unsigned long );
 extern int get_el ( void );
 extern unsigned int getCore();
 extern void hang();
+
+extern void dsb();
+extern void dmb();
+extern void isb();
+
+// extern void write_fence(unsigned *);
+// extern void read_fence(unsigned *);
+
 #endif  /*_UTILS_H */

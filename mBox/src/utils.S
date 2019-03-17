@@ -39,3 +39,28 @@ getCore:
 .globl hang
 hang: 
 	b 	hang
+
+.globl dmb
+dmb:
+	dmb sy
+	ret
+
+.globl dsb
+dsb:
+	dsb sy
+	ret
+
+.globl isb
+isb:
+	isb
+	ret
+/*
+.globl write_fence
+write_fence:
+	ldar r0
+	ret
+.globl read_fence
+read_fence:
+	stlr r0
+	ret
+*/
