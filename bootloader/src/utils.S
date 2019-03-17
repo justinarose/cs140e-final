@@ -55,9 +55,9 @@ isb:
 	isb
 	ret
 
-.globl BRANCHTO_ARMBASE
-BRANCHTO_ARMBASE:
-	b 0x8000
+.globl BRANCHTO
+BRANCHTO:
+	br x0
 
 /*
 .globl write_fence
