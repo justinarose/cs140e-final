@@ -19,8 +19,8 @@
 #ifndef __ASSEMBLER__
 
 unsigned long get_free_page();
-void free_page(void* p);
-void memzero(void* src, unsigned long n);
+void free_page(unsigned long p);
+void memzero(unsigned long src, unsigned long n);
 
 #endif
 

@@ -13,6 +13,6 @@ unsigned long get_free_page()
 	return 0;
 }
 
-void free_page(void* p){
-	mem_map[((unsigned long) p - LOW_MEMORY) / PAGE_SIZE] = 0;
+void free_page(unsigned long p){
+	mem_map[(p - LOW_MEMORY) / PAGE_SIZE] = 0;
 }

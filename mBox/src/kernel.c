@@ -11,19 +11,17 @@
 #include "peripherals/irq.h"
 #include "peripherals/mbox.h"
 unsigned waitMaster = 1;
-unsigned childReady[3];
-// unsigned childReady;
-unsigned counts[3];
-unsigned signals[3];
-char* addrs[3];
+unsigned waitChild[3] = {1,1,1};
+
 
 void kernel_main(void)
 {
-	init_printf(0, putc);
-	while(1) {
-		printf("testing\r\n");
-	}
 	uart_init();
+	init_printf(0, putc);
+	// while(1) {
+	// 	printf("testing\r\n");
+	// }
+	
 	unsigned c = 0;
 	
 	while(c != 's'){
@@ -36,14 +34,15 @@ void kernel_main(void)
 	irq_vector_init();
 	enable_irq();
 	waitMaster = 0;
-	while(!(childReady[0] && childReady[1] && childReady[2])) {
+	while(waitChild[0] || waitChild[1] || waitChild[2]) {
 		;
 	}
 	// delay(300000);
-
+	unsigned msg;
 	for(unsigned i=0; i < 40; i++){
 		delay(200000);
-		mbox_send((i%4), (i%4), 999);
+		msg = i;
+		mbox_sendA((i%4), (i%4), &i);
 	}
 
 	while(1) {;}
@@ -60,12 +59,16 @@ void kernel_child(void)
 	unsigned cpu = getCore();
 
 	while(waitMaster) {;}
-	// delay((cpu)*100000);
+	delay((cpu)*100000);
+	printf("CPU %u\r\n", cpu);
+	unsigned msg;
 	for(unsigned i=0; i < 4; i++) {
-		mbox_send(0, i, 21*cpu);
+		delay(200000);
+		msg = 5*cpu*i;
+		mbox_sendA(0, i, &msg);
 	}
 	
-	childReady[cpu-1] = 1;
+	waitChild[cpu-1] = 0;
 
 	hang();
 

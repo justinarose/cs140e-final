@@ -39,7 +39,7 @@ el1_entry:
 	sub	x1, x1, x0
 	bl 	memzero
 
-	mov	sp, #(2 * SECTION_SIZE) 
+	mov	sp, #LOW_MEMORY 
 	bl	kernel_main
 	b 	proc_hang		// should never come here
 
@@ -59,8 +59,7 @@ child:
 	adr	x0, el1_entry_child		
 	msr	elr_el3, x0
 
-	eret
-
+	eret	
 
 el1_entry_child:
 	mrs	x0, mpidr_el1		

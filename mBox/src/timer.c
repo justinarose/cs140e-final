@@ -15,7 +15,6 @@ void timer_init ( void )
 
 void handle_timer_irq( void ) 
 {
-	printf("timer!\r\n");
 	curVal += interval;
 	put32(TIMER_C1, curVal);
 	put32(TIMER_CS, TIMER_CS_M1);

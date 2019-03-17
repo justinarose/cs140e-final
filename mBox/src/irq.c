@@ -29,10 +29,7 @@ const char *entry_error_messages[] = {
 
 void enable_interrupt_controller()
 {
-	// unsigned cpuId = getCore();
-	// printf("Enabling interrupts for %u\r\n", cpuId);
 	put32(ENABLE_IRQS_1, SYSTEM_TIMER_IRQ_1);
-	// put32(ENABLE_BASIC_IRQS, ARM_MBOX_IRQ);
 }
 
 void show_invalid_entry_message(int type, unsigned long esr, unsigned long address)
@@ -42,7 +39,14 @@ void show_invalid_entry_message(int type, unsigned long esr, unsigned long addre
 
 void handle_irq(void)
 {
-	// unsigned int irq = get32(IRQ_BASIC_PENDING);
+	// unsigned int irq = get32(IRQ_PENDING_1);
+	// switch (irq) {
+	// 	case (SYSTEM_TIMER_IRQ_1):
+	// 		handle_timer_irq();
+	// 		break;
+	// 	default:
+	// 		printf("Inknown pending irq: %x\r\n", irq);
+	// }
 	unsigned cpuId = getCore();
 	// printf("cpu %u handler\r\n", cpuId);
 	printf("%u\r\n", cpuId);
@@ -53,27 +57,8 @@ void handle_irq(void)
 	while(!(val & 1 << mboxNum)) {
 		mboxNum++;
 	}
-	// printf("SRC: %u\r\n", src);
-	// switch (irq) {
-	// 	case (ARM_MBOX_IRQ):
-	// 		handle_mbox_irq();
-	// 		break;
-	// 	default:
-	// 		printf("Unknown pending irq: %x\r\n", irq);
-	// }
-	// printf("IRQ is %x\r\n", irq);
-	// if(irq & ARM_MBOX_IRQ) {
-	// if(val) {
-	// 	// printf("received mbox interrupt on cpu %u mbox %u\r\n", cpuId, mboxNum);
-	// 	handle_mbox_irq(mboxNum);
-	// } 
-	// unsigned irq = get32(IRQ_PENDING_1);
-	// switch (irq) {
-	// 	case (SYSTEM_TIMER_IRQ_1):
-	// 		handle_timer_irq();
-	// 		break;
-	// 	default:
-	// 		printf("Unknown pending irq: %x\r\n", irq);
-	// }
-
+	if(val) {
+		// printf("received mbox interrupt on cpu %u mbox %u\r\n", cpuId, mboxNum);
+		handle_mbox_irq(mboxNum);
+	} 
 }
