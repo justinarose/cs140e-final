@@ -122,7 +122,7 @@ void rpi_reboot(void) {
 #define assert(bool) do { if((bool) == 0) panic(#bool); } while(0)
 
 enum {
-	ARMBASE=0x8000, // where program gets linked.  we could send this.
+	ARMBASE=0x1000000, // where program gets linked.  we could send this.
         SOH = 0x12345678,   // Start Of Header
 
         BAD_CKSUM = 0x1,
@@ -160,10 +160,26 @@ static void die(int code) {
         put_uint(code);
         rpi_reboot();
 }
-
+#define GPFSEL1 0x3F200004
+#define GPSET0  0x3F20001C
+#define GPCLR0  0x3F200028
 void kernel_main(void)
 {
 	uart_init();
+
+    unsigned int ra;
+    ra=get32(GPFSEL1);
+    ra&=~(7<<18);
+    ra|=1<<18;
+    put32(GPFSEL1,ra);
+
+    for(unsigned i=0; i < 3; i++)
+    {
+        put32(GPSET0,1<<16);
+        for(ra=0;ra<0x100000;ra++) burn();
+        put32(GPCLR0,1<<16);
+        for(ra=0;ra<0x100000;ra++) burn();
+    }
 
 	delay_ms(1000);
 
@@ -178,7 +194,13 @@ void kernel_main(void)
 	unsigned sz = get_uint();
 
 	unsigned cksum = get_uint();
-
+    // for(unsigned i=0; i < 5; i++)
+    // {
+    //     put32(GPSET0,1<<16);
+    //     for(ra=0;ra<0x100000;ra++) burn();
+    //     put32(GPCLR0,1<<16);
+    //     for(ra=0;ra<0x100000;ra++) burn();
+    // }
 	// check if the binary is too large
 	// if(sz > (unsigned)BRANCHTO - ARMBASE){
 	// 	die(NAK);
@@ -188,14 +210,20 @@ void kernel_main(void)
 	put_uint(SOH);
 	put_uint(crc32(&sz, sizeof(sz)));
 	put_uint(cksum);
-
+    // for(unsigned i=0; i < 5; i++)
+    // {
+    //     put32(GPSET0,1<<16);
+    //     for(ra=0;ra<0x100000;ra++) burn();
+    //     put32(GPCLR0,1<<16);
+    //     for(ra=0;ra<0x100000;ra++) burn();
+    // }
 	// wait for ACK
 	if(get_uint() != ACK) {
 		die(NAK);
 	}
 
 	// read the bytes and copy them to ARMBASE one at a time
-	char * program = (char *) ARMBASE;
+	char * program = (char *) 0x1000000;
 	unsigned int i;
 	for(i = 0; i < sz; i++) {
 		program[i] = get_byte();
@@ -203,7 +231,13 @@ void kernel_main(void)
 
 	// check for EOT
 	if(get_uint() != EOT) die(NAK);
-
+    // for(unsigned i=0; i < 5; i++)
+    // {
+    //     put32(GPSET0,1<<16);
+    //     for(ra=0;ra<0x100000;ra++) burn();
+    //     put32(GPCLR0,1<<16);
+    //     for(ra=0;ra<0x100000;ra++) burn();
+    // }
 	// verify that the program was correct
 	if(cksum != crc32(program, sz)) die(NAK);
 
@@ -221,9 +255,23 @@ void kernel_main(void)
 	// I believe it's b/c the code we call re-initializes the uart; could
 	// disable that to make it a bit more clean.
 	delay_ms(500);
-
+    for(unsigned i=0; i < 3; i++)
+    {
+        put32(GPSET0,1<<16);
+        for(ra=0;ra<0x100000;ra++) burn();
+        put32(GPCLR0,1<<16);
+        for(ra=0;ra<0x100000;ra++) burn();
+    }
 	// run what client sent.
-        BRANCHTO_ARMBASE();
+        BRANCHTO(0x1000000);
+
+    for(unsigned i=0; i < 30; i++)
+    {
+        put32(GPSET0,1<<16);
+        for(ra=0;ra<0x10000;ra++) burn();
+        put32(GPCLR0,1<<16);
+        for(ra=0;ra<0x10000;ra++) burn();
+    }
 	// should not get back here, but just in case.
 	rpi_reboot();
 

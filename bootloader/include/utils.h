@@ -13,7 +13,7 @@ extern void hang();
 extern void dsb();
 extern void dmb();
 extern void isb();
-extern void BRANCHTO_ARMBASE();
+extern void BRANCHTO(unsigned);
 // unsigned at_user_level(void);
 // void set_user_level(void);
 void burn();

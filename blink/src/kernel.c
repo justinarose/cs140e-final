@@ -1,13 +1,16 @@
 
 #include "utils.h"
 
-
+#include "printf.h"
+#include "mini_uart.h"
 
 #define GPFSEL1 0x3F200004
 #define GPSET0  0x3F20001C
 #define GPCLR0  0x3F200028
 void kernel_main(void)
 {
+    // init_printf(0, putc);
+    // printf("DID IT!\r\n");
     unsigned int ra;
     ra=get32(GPFSEL1);
     ra&=~(7<<18);
