@@ -10,7 +10,11 @@
 #define PAGE_SIZE   		(1 << PAGE_SHIFT)	
 #define SECTION_SIZE		(1 << SECTION_SHIFT)	
 
-#define LOW_MEMORY              (2 * SECTION_SIZE)
+#define STACK_CORE0 (2 * SECTION_SIZE)
+#define STACK_SIZE (SECTION_SIZE)
+
+#define NUM_CORES 4
+#define LOW_MEMORY              (STACK_CORE0 + (NUM_CORES - 1) * STACK_SIZE)
 #define HIGH_MEMORY             PBASE
 
 #define PAGING_MEMORY           (HIGH_MEMORY - LOW_MEMORY)
