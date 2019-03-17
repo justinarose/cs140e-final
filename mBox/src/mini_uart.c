@@ -1,7 +1,7 @@
 #include "utils.h"
 #include "peripherals/mini_uart.h"
 #include "peripherals/gpio.h"
-
+#include "printf.h"
 void uart_send ( char c )
 {
 	while(1) {
@@ -59,4 +59,10 @@ void uart_init ( void )
 void putc ( void* p, char c)
 {
 	uart_send(c);
+}
+
+void handle_uart_irq( void ) 
+{
+	unsigned c = uart_recv();
+	printf("%u\r\n", c);
 }

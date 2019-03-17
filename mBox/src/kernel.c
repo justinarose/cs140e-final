@@ -13,14 +13,11 @@
 unsigned waitMaster = 1;
 unsigned waitChild[3] = {1,1,1};
 
-
+extern unsigned bss_end;
 void kernel_main(void)
 {
 	uart_init();
 	init_printf(0, putc);
-	// while(1) {
-	// 	printf("testing\r\n");
-	// }
 	
 	unsigned c = 0;
 	
@@ -28,10 +25,13 @@ void kernel_main(void)
 		c = uart_recv();
 	}
 	printf("MASTER!\r\n");
+	printf("%x\r\n", &bss_end);
 	for(unsigned i = 0; i < 4; i++) {
 		mbox_init(i);
 	}
 	irq_vector_init();
+	timer_init();
+	enable_interrupt_controller();
 	enable_irq();
 	waitMaster = 0;
 	while(waitChild[0] || waitChild[1] || waitChild[2]) {

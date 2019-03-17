@@ -5,6 +5,7 @@
 #include "peripherals/irq.h"
 #include "peripherals/mbox.h"
 #include "mbox.h"
+#include "mini_uart.h"
 const char *entry_error_messages[] = {
 	"SYNC_INVALID_EL1t",
 	"IRQ_INVALID_EL1t",		
@@ -30,6 +31,7 @@ const char *entry_error_messages[] = {
 void enable_interrupt_controller()
 {
 	put32(ENABLE_IRQS_1, SYSTEM_TIMER_IRQ_1);
+	// put32(ENABLE_IRQS_2, UART_IRQ);
 }
 
 void show_invalid_entry_message(int type, unsigned long esr, unsigned long address)
@@ -39,26 +41,41 @@ void show_invalid_entry_message(int type, unsigned long esr, unsigned long addre
 
 void handle_irq(void)
 {
-	// unsigned int irq = get32(IRQ_PENDING_1);
-	// switch (irq) {
-	// 	case (SYSTEM_TIMER_IRQ_1):
-	// 		handle_timer_irq();
-	// 		break;
-	// 	default:
-	// 		printf("Inknown pending irq: %x\r\n", irq);
-	// }
+	unsigned known = 0;
 	unsigned cpuId = getCore();
-	// printf("cpu %u handler\r\n", cpuId);
 	printf("%u\r\n", cpuId);
+
+
+	unsigned int irq = get32(IRQ_PENDING_1);
+	if(irq & SYSTEM_TIMER_IRQ_1) {
+		handle_timer_irq();
+		known = 1;
+	}
+
+	// irq = get32(IRQ_PENDING_2);
+	// if(irq & UART_IRQ) {
+	// 	handle_uart_irq();
+	// 	known = 1;
+	// }
+
 	unsigned irqSourceAddr = CORE0_IRQ_SOURCE + 4*cpuId;
 	unsigned src = get32(irqSourceAddr);
 	unsigned val = (src >> 4) & (0b1111);
 	unsigned mboxNum = 0;
+	// printf("mboxC\r\n");
 	while(!(val & 1 << mboxNum)) {
 		mboxNum++;
+		if(mboxNum > 3) {
+			mboxNum = -1;
+			break;
+		}
 	}
+	// printf("gotNum\r\n");
 	if(val) {
 		// printf("received mbox interrupt on cpu %u mbox %u\r\n", cpuId, mboxNum);
 		handle_mbox_irq(mboxNum);
+		known = 1;
 	} 
+	// printf("finIRQ\r\n");
+	if(!known) printf("UNKNOWNINT\r\n");
 }
