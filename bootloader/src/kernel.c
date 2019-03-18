@@ -112,7 +112,7 @@ void rpi_reboot(void) {
         // timeout = 1/16th of a second? (whatever)
         put32(PM_WDOG, PM_PASSWORD | 1);
         put32(PM_RSTC, PM_PASSWORD | PM_RSTC_WRCFG_FULL_RESET);
-	while(1); 
+	while(1);
 }
 #define panic(msg, args...) do { 					\
 	(printf)("PANIC:%s:%s:%d:" msg "\n", __FILE__, __FUNCTION__, __LINE__, ##args); \
@@ -137,7 +137,7 @@ enum {
 static void send_byte(unsigned char uc) {
 	uart_send(uc);
 }
-static unsigned char get_byte(void) { 
+static unsigned char get_byte(void) {
         return uart_recv();
 }
 static unsigned get_uint(void) {
@@ -163,6 +163,10 @@ static void die(int code) {
 #define GPFSEL1 0x3F200004
 #define GPSET0  0x3F20001C
 #define GPCLR0  0x3F200028
+
+
+unsigned waitMaster=1;
+
 void kernel_main(void)
 {
 	uart_init();
@@ -172,14 +176,6 @@ void kernel_main(void)
     ra&=~(7<<18);
     ra|=1<<18;
     put32(GPFSEL1,ra);
-
-    for(unsigned i=0; i < 3; i++)
-    {
-        put32(GPSET0,1<<16);
-        for(ra=0;ra<0x100000;ra++) burn();
-        put32(GPCLR0,1<<16);
-        for(ra=0;ra<0x100000;ra++) burn();
-    }
 
 	delay_ms(1000);
 
@@ -254,29 +250,30 @@ void kernel_main(void)
 	// XXX: appears we need these delays or the unix side gets confused.
 	// I believe it's b/c the code we call re-initializes the uart; could
 	// disable that to make it a bit more clean.
-	delay_ms(500);
-    for(unsigned i=0; i < 3; i++)
-    {
-        put32(GPSET0,1<<16);
-        for(ra=0;ra<0x100000;ra++) burn();
-        put32(GPCLR0,1<<16);
-        for(ra=0;ra<0x100000;ra++) burn();
-    }
-	// run what client sent.
-        BRANCHTO(0x1000000);
 
-    for(unsigned i=0; i < 30; i++)
-    {
-        put32(GPSET0,1<<16);
-        for(ra=0;ra<0x10000;ra++) burn();
-        put32(GPCLR0,1<<16);
-        for(ra=0;ra<0x10000;ra++) burn();
-    }
+	// run what client sent.
+    //BRANCHTO(0x1000000);
+	waitMaster=0;
+	init_printf(0, putc);
+	printf("Program loaded!\r\n");
+	int counter = 1;
+  while(1){
+		printf("Counter is: %d\r\n", counter);
+		for(ra=0;ra<0x100000;ra++) burn();
+		counter++;
+	}
 	// should not get back here, but just in case.
 	rpi_reboot();
 
 }
 
+
+
 void kernel_child() {
+	unsigned cpu = getCore();
+	if(cpu == 1){
+		while(waitMaster){;}
+		BRANCHTO(0x1000000);
+	}
 	hang();
 }

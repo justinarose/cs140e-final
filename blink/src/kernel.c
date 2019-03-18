@@ -9,8 +9,8 @@
 #define GPCLR0  0x3F200028
 void kernel_main(void)
 {
-    // init_printf(0, putc);
-    // printf("DID IT!\r\n");
+    init_printf(0, putc);
+    printf("DID IT!\r\n");
     unsigned int ra;
     ra=get32(GPFSEL1);
     ra&=~(7<<18);
