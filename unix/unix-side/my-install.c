@@ -141,8 +141,8 @@ int main(int argc, char *argv[]) {
                 	panic("my-install: bad argument '%s'.\n", argv[i]);
 	
 	}
-	// int prog_nbytes;
- //        unsigned char *program = read_file(&prog_nbytes, name);
+	int prog_nbytes;
+        unsigned char *program = read_file(&prog_nbytes, name);
 
 	// open tty
 	int fd;
@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
 	fprintf(stderr, "my-install: about to boot\n");
 	// char * segfault = 0;
 	// *segfault = 0;
-        // simple_boot(fd, program, prog_nbytes);
+        simple_boot(fd, program, prog_nbytes);
 
 	if(exec_args) {
 		handoff_to(fd,exec_args);

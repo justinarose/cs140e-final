@@ -92,10 +92,11 @@ void simple_boot(int fd, const unsigned char * buf, unsigned n) {
 
 	// one by one, send program bytes to the pi
 	unsigned *prog = (unsigned *) buf;
-
+	printf("Sending file\n");
 	for(unsigned int i = 0; i < n/sizeof(unsigned); i++) {
 		put_uint(fd, prog[i]);
 	}
+	printf("Finished sending\n");
 	// send EOT
 	put_uint(fd, EOT);
 
