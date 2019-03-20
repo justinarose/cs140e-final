@@ -2,7 +2,6 @@
 #include "mbox.h"
 #include "peripherals/mbox.h"
 #include "printf.h"
-#include "irq.h"
 // unsigned IRQCNTLS[] = {CORE0_MBOX_IRQCNTL, CORE1_MBOX_IRQCNTL, CORE2_MBOX_IRQCNTL, CORE3_MBOX_IRQCNTL};
 
 
@@ -57,14 +56,6 @@ unsigned* mbox_readA(unsigned mbox){
 
 void handle_mbox_irq(unsigned mbox) {
 	unsigned cpu = getCore();
-	if(mbox == 0) {
-		unsigned* program = mbox_readA(mbox);
-		printf("Core %u mbox %u going to %x\r\n", cpu, mbox, (unsigned long) program);
-		enable_irq();
-		BRANCHTO(program);
-		disable_irq();
-	} else if(mbox==1) {
-		unsigned msg = mbox_read(mbox);
-		printf("Core %u mbox %u got %u\r\n", cpu, mbox, msg);
-	}
+	unsigned msg = mbox_read(mbox);
+	printf("Core %u mbox %u got %u\r\n", cpu, mbox, msg);
 }

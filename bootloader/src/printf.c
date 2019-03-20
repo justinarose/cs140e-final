@@ -84,7 +84,7 @@ static void i2a (int num, char * bf)
     ui2a(num,10,0,bf);
     }
 
-static int a2d(char ch)
+int a2d(char ch)
     {
     if (ch>='0' && ch<='9')
         return ch-'0';

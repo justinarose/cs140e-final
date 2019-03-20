@@ -1,6 +1,6 @@
 SECTIONS
 {
-	.text.boot : { *(.text.boot) }
+	.text.boot 0x0: { *(.text.boot) }
 	.text :  { *(.text) }
 	.rodata : { *(.rodata) }
 	.data : { *(.data) }

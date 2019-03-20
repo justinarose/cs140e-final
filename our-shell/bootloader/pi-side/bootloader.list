@@ -1308,7 +1308,7 @@ Disassembly of section .rodata:
   201268:	5a05df1b 	bpl	378edc <__bss_end__+0x1776e4>
   20126c:	2d02ef8d 	stccs	15, cr14, [r2, #-564]	; 0xfffffdcc
 
-00201270 <__FUNCTION__.3791>:
+00201270 <__FUNCTION__.3838>:
   201270:	6f697067 	svcvs	0x00697067
   201274:	6165725f 	cmnvs	r5, pc, asr r2
   201278:	00000064 	andeq	r0, r0, r4, rrx

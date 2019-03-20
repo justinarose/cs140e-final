@@ -13,7 +13,15 @@ put32:
 get32:
 	ldr w0,[x0]
 	ret
+.globl putA32
+putA32:
+	str w1,[x0]
+	ret
 
+.globl getA32
+getA32:
+	ldr w0,[x0]
+	ret
 .globl delay
 delay:
 	subs x0, x0, #1

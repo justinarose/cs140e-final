@@ -56,6 +56,9 @@ unsigned* mbox_readA(unsigned mbox){
 
 void handle_mbox_irq(unsigned mbox) {
 	unsigned cpu = getCore();
-	unsigned* msg = mbox_readA(mbox);
-	printf("Core %u mbox %u got %u\r\n", cpu, mbox, *msg);
+	printf("mbox interrupt %u\r\n", cpu);
+	unsigned msg = mbox_read(mbox);
+	printf("msg is %u \r\n", msg);
+	// printf("Core %u mbox %u got %X\r\n", cpu, mbox, (unsigned) msg);
+	BRANCHTO(msg);
 }

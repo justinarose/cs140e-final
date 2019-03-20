@@ -170,9 +170,13 @@ static int do_builtin_cmd(int pi_fd, char *argv[], int nargs) {
     printf("Going to echo off pi\n");
     for(int i=0; i<nargs; i++){
       pi_put(pi_fd, argv[i]);
+
       pi_put(pi_fd, " ");
+      printf("%s ", argv[i]);
     }
     pi_put(pi_fd, "\n");
+    printf("\n");
+    echo_until(pi_fd, cmd_done);
     if(pi_readline(pi_fd, buf, 1024)) {
 			note("pi echoed: %s\n", buf);
 		} else {
@@ -191,7 +195,7 @@ static int do_builtin_cmd(int pi_fd, char *argv[], int nargs) {
         pi_put(pi_fd, " ");
       }
       pi_put(pi_fd, "\n");
-      echo_until(fd, cmd_done);
+      echo_until(pi_fd, cmd_done);
     }
     return 1;
   }
@@ -266,5 +270,6 @@ int main(void) {
 
   // giving the pi side a chance to get going.
   sleep(1);
+  // echo_until(fd, cmd_done);
 	return shell(fd, 0);
 }

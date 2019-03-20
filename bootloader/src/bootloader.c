@@ -1,6 +1,4 @@
-#include <stddef.h>
-#include <stdint.h>
-
+#include "bootloader.h"
 #include "printf.h"
 #include "utils.h"
 #include "timer.h"
@@ -8,14 +6,12 @@
 #include "fork.h"
 #include "sched.h"
 #include "mini_uart.h"
-#include "sys.h"
-#include "user.h"
+#include "utils.h"
 #include "mm.h"
 #include "mbox.h"
+#include "peripherals/irq.h"
 #include "peripherals/mbox.h"
-typedef unsigned u32;
-typedef unsigned char u8;
-
+#include "peripherals/base.h"
 static u32 crc32_tab[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
 	0xe963a535, 0x9e6495a3,	0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
@@ -80,7 +76,7 @@ void delay_cycles(unsigned ticks) {
 }
 
 unsigned timer_get_time(void) {
-	return get32(VA_START + 0x3F003004);
+	return get32(0x3F003004);
 }
 
 void delay_us(unsigned us) {
@@ -107,8 +103,8 @@ void rpi_reboot(void) {
 	// gives uart time to flush: should just call flush directly.
 	delay_ms(30);
 
-        const int PM_RSTC = 0x3F10001c;
-        const int PM_WDOG = 0x3F100024;
+        const unsigned long PM_RSTC = 0x3F10001c;
+        const unsigned long PM_WDOG = 0x3F100024;
         const int PM_PASSWORD = 0x5a000000;
         const int PM_RSTC_WRCFG_FULL_RESET = 0x00000020;
 
@@ -124,33 +120,22 @@ void rpi_reboot(void) {
 
 #define assert(bool) do { if((bool) == 0) panic(#bool); } while(0)
 
-enum {
-	ARMBASE=0x1000000, // where program gets linked.  we could send this.
-        SOH = 0x12345678,   // Start Of Header
 
-        BAD_CKSUM = 0x1,
-        BAD_START,
-        BAD_END,
-	TOO_BIG,
-	ACK,   // client ACK
-        NAK,   // Some kind of error, restart
-        EOT,   // end of transmission
-};
 
-static void send_byte(unsigned char uc) {
+void send_byte(unsigned char uc) {
 	uart_send(uc);
 }
-static unsigned char get_byte(void) {
+unsigned char get_byte(void) {
         return uart_recv();
 }
-static unsigned get_uint(void) {
+unsigned get_uint(void) {
 	unsigned u = get_byte();
         u |= get_byte() << 8;
         u |= get_byte() << 16;
         u |= get_byte() << 24;
 	return u;
 }
-static void put_uint(unsigned u) {
+void put_uint(unsigned u) {
         send_byte((u >> 0)  & 0xff);
         send_byte((u >> 8)  & 0xff);
         send_byte((u >> 16) & 0xff);
@@ -159,74 +144,34 @@ static void put_uint(unsigned u) {
 
 
 
-static void die(int code) {
+void die(int code) {
         put_uint(code);
         rpi_reboot();
 }
-#define GPFSEL1 (VA_START + 0x3F200004)
-#define GPSET0  (VA_START + 0x3F20001C)
-#define GPCLR0  (VA_START + 0x3F200028)
-#define PROGRAM_ADDRESS (VA_START + 0x1000000)
 
-unsigned waitMaster=1;
-
-void kernel_main()
-{
-	uart_init();
-	unsigned int ra;
-	ra=get32(GPFSEL1);
-	ra&=~(7<<18);
-	ra|=1<<18;
-	put32(GPFSEL1,ra);
-
+unsigned load(unsigned* addr){
 	delay_ms(1000);
-
-
 	unsigned rcv = get_uint();
-	while(rcv != 0x12345678) {
-		// delay_ms(1000);
-		// put_uint(rcv);
+	while(rcv != SOH) {
 		rcv = get_uint();
 	}
-	// if(rcv != ) die(rcv);
-
 	unsigned sz = get_uint();
 	unsigned cksum = get_uint();
-	// check if the binary is too large
-	// if(sz > (unsigned)BRANCHTO - ARMBASE){
-	// 	die(NAK);
-	// }
-	unsigned long pgd = 0;
-
-	for(int i = 0; i< sz; i+= PAGE_SIZE){
-		allocate_user_page_pgd(i, &pgd);
-	}
-	set_pgd(pgd);
-
 	// echo back SOH, cksum(sz), cksum
 	put_uint(SOH);
 	put_uint(crc32(&sz, sizeof(sz)));
 	put_uint(cksum);
-
-	// set up page tables here
-
-		// for(unsigned i=0; i < 5; i++)
-		// {
-		//     put32(GPSET0,1<<16);
-		//     for(ra=0;ra<0x100000;ra++) burn();
-		//     put32(GPCLR0,1<<16);
-		//     for(ra=0;ra<0x100000;ra++) burn();
-		// }
 	// wait for ACK
 	if(get_uint() != ACK) {
 		die(NAK);
 	}
 	// read the bytes and copy them to ARMBASE one at a time
-	unsigned *program = (unsigned *) 0x0;
+	char * program = (char *) addr;
 	unsigned int i;
-	for(i = 0; i < sz/4; i++) {
-		program[i] = get_uint();
+	for(i = 0; i < sz; i++) {
+		program[i] = get_byte();
 	}
+
 	// check for EOT
 	if(get_uint() != EOT) die(NAK);
 
@@ -236,90 +181,5 @@ void kernel_main()
 	// acknowledge
 	put_uint(ACK);
 
-	for(unsigned i=0; i < 10; i++)
-	{
-			put32(GPSET0,1<<16);
-			for(ra=0;ra<0x8000;ra++) burn();
-			put32(GPCLR0,1<<16);
-			for(ra=0;ra<0x8000;ra++) burn();
-	}
-
-	// while(1) {
-	// 	unsigned val = get_uint();
-	// 	if(val == 0x12345678) reboot();
-	// 	put_uint(val+1);
-	// }
-	// reboot();
-	// XXX: appears we need these delays or the unix side gets confused.
-	// I believe it's b/c the code we call re-initializes the uart; could
-	// disable that to make it a bit more clean.
-
-	// run what client sent.
-	init_printf(0, putc);
-	printf("The program loaded about to branch!\r\n");
-	// irq_vector_init();
-	// enable_interrupt_controller();
-	// enable_irq();
-	waitMaster = 0;
-	delay(600000);
-	mbox_send(0,0,69);
-	
-	BRANCHTO(program);
-	// waitMaster=0;
-	// printf("Program loaded!\r\n");
-	// int counter = 1;
-	// while(1){
-	// 	printf("Counter is: %d\r\n", counter);
-	// 	for(ra=0;ra<0x100000;ra++) burn();
-	// 	counter++;
-	// }
-	// // should not get back here, but just in case.
-	// rpi_reboot();
-
-}
-
-void kernel_child(void)
-{
-	irq_vector_init();
-
-	unsigned cpu = getCore();
-	// for(unsigned i = 0; i < 4; i++) {
-		// mbox_init(i);
-	// }
-	// unsigned mbox = 0;
-
-	// val |= (1 << mbox);
-	// put32(irqcntlAddr, val);
-
-	while(waitMaster) {;}
-		delay(100000*cpu);
-		// unsigned long irqcntlAddr = CORE0_MBOX_IRQCNTL + 4*cpu;
-		// unsigned val = get32(irqcntlAddr);
-		unsigned long addr = CORE0_MBOX_IRQCNTL;
-		printf("about to test %x %x\r\n", addr >> 32, addr);
-		unsigned test = *((unsigned*)addr);
-		printf("Core %u awoke!\r\n", cpu);
-		printf("irqcntlAddr %x %x\r\n", addr >> 32, addr);
-		// printf("test %u\r\n", test);
-	// irq_vector_init();
-	// // enable_interrupt_controller();
-	// enable_irq();
-	
-	// if(cpu == 1) {
-	
-		
-		// init_printf(0, putc);
-
-	// }
-	// if(cpu == 1){
-	// 	uart_init();
-	// 	init_printf(0, putc);
-	// 	printf("Core 1 awoke!\r\n");
-	// 	// while(1){
-	// 	// 	while(waitMaster){;}
-	// 	// 	waitMaster=1;
-	// 	// 	BRANCHTO(PROGRAM_ADDRESS);
-	// 	// }
-	// }
-	hang();
+	return 0;
 }

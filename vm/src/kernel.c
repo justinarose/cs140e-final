@@ -16,10 +16,12 @@
 #include "mm.h"
 // void kernel_process(){
 // 	printf("Kernel process started. EL %d\r\n", get_el());
-// 	unsigned long begin = (unsigned long)&user_begin;
-// 	unsigned long end = (unsigned long)&user_end;
-// 	unsigned long process = (unsigned long)&user_process;
+// 	unsigned long begin = (unsigned long) VA_START + 0x1000000;
+// 	unsigned long end = (unsigned long) VA_START + 0x1000000 + 13148/4;
+// 	unsigned long process = (unsigned long) begin;
+// 	printf("About to move to user mode\r\n");
 // 	int err = move_to_user_mode(begin, end - begin, process - begin);
+// 	printf("Finished moving to user mode\r\n");
 // 	if (err < 0){
 // 		printf("Error while moving process to user mode\n\r");
 // 	} 
@@ -171,7 +173,7 @@ void kernel_main(void)
 
 	printf("Program loaded!\r\n");
 	// run what client sent.
-    // BRANCHTO((unsigned long) program);
+    BRANCHTO((unsigned long) program);
 	// int counter = 1;
  //  while(1){
 	// 	printf("Counter is: %d\r\n", counter);
@@ -180,20 +182,20 @@ void kernel_main(void)
 	// }
 	// should not get back here, but just in case.
 	// rpi_reboot();
-	irq_vector_init();
-	timer_init();
-	enable_interrupt_controller();
-	enable_irq();
+	// irq_vector_init();
+	// timer_init();
+	// enable_interrupt_controller();
+	// enable_irq();
 
-	int res = copy_process(PF_KTHREAD, (unsigned long)&kernel_process, 0);
-	if (res < 0) {
-		printf("error while starting kernel process");
-		return;
-	}
+	// int res = copy_process(PF_KTHREAD, (unsigned long)&kernel_process, 0);
+	// if (res < 0) {
+	// 	printf("error while starting kernel process");
+	// 	return;
+	// }
 
-	while (1){
-		schedule();
-	}	
+	// while (1){
+	// 	schedule();
+	// }	
 // }
 
 }
