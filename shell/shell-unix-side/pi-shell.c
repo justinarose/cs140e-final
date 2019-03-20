@@ -31,7 +31,7 @@ static const char cmd_done[] = "CMD-DONE\n";
 static void write_exact(int fd, const void *buf, int nbytes) {
         int n;
         if((n = write(fd, buf, nbytes)) < 0) {
-		panic("i/o error writing to pi = <%s>.  Is pi connected?\n", 
+		panic("i/o error writing to pi = <%s>.  Is pi connected?\n",
 					strerror(errno));
 	}
         demand(n == nbytes, something is wrong);
@@ -100,7 +100,7 @@ void sigint_handler(int sig_no){
 
 }
 
-// catch control c: set done=1 when happens.  
+// catch control c: set done=1 when happens.
 static void catch_control_c(void) {
 	struct sigaction act;
 	act.sa_handler = &sigint_handler;
@@ -130,14 +130,12 @@ static void send_prog(int fd, const char *name) {
 	int nbytes;
 
 	// from homework.
-        unsigned *code = (void*)read_file(&nbytes, name);
+  unsigned *code = (void*)read_file(&nbytes, name);
 	assert(nbytes%4==0);
 
 	expect_val(fd, ACK);
 	note("got ACK\n");
-
-	put_uint(fd, code[0]);
-	put_uint(fd, code[1]);
+  
 	put_uint(fd, nbytes);
 	put_uint(fd, crc32(code,nbytes));
 	// char buf[1024];
@@ -216,8 +214,8 @@ static int shell(int pi_fd, int unix_fd) {
 
 	catch_control_c();
 
-	// wait for the welcome message from the pi?  note: we 
-	// will hang if the pi does not send an entire line.  not 
+	// wait for the welcome message from the pi?  note: we
+	// will hang if the pi does not send an entire line.  not
 	// sure about this: should we keep reading til newline?
 	note("> ");
 	while(!done && fgets(buf, sizeof buf, stdin)) {
